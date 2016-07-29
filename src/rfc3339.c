@@ -1,15 +1,8 @@
-#include <math.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/time.h>
-#include <time.h>
-
 #include <Python.h>
 #include <datetime.h>
 #include <structmember.h>
 
-#define RFC3339_VERSION "0.0.1"
+#define RFC3339_VERSION "0.0.2"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
