@@ -77,15 +77,15 @@ if __name__ == '__main__':
     for k in globals().keys():
         if k.startswith('benchmark_'):
             print '============ %s' % k
-            times = []
+            mins = []
 
             for func in globals()[k]():
-                t = min(
+                times =\
                     timeit.repeat('func()', setup='from __main__ import func')
-                )
-                times.append(t)
+                t = min(times)
+                mins.append(t)
 
-                print func.__name__, t
+                print func.__name__, t, times
 
-            times = sorted(times)
-            print 'Difference: %d%%\n' % (100 - (times[0] / (times[1] / 100)))
+            mins = sorted(mins)
+            print 'Difference: %d%%\n' % (100 - (mins[0] / (mins[1] / 100)))
