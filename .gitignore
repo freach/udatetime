@@ -1,0 +1,8 @@
+build/
+dist
+docs/_build/
+*.egg-info/
+*.egg
+*.pyc
+*.swp
+*.so
