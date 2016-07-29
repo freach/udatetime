@@ -54,6 +54,12 @@ some essential tools to execute the build like a C compiler.
 $ sudo apt-get install python-dev build-essential
 ```
 
+or
+
+```
+$ sudo yum install python-devel gcc
+```
+
 ## Benchmark
 
 The benchmarks compare the performance of equivalent code of `datetime` and
