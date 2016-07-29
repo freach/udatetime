@@ -17,7 +17,7 @@ with open('%s/README.md' % here) as f:
 rfc3339 = Extension(
     'rfc3339',
     ['./src/rfc3339.c'],
-    extra_compile_args=['-Ofast']
+    extra_compile_args=['-Ofast', '-std=c99']
 )
 
 setup(
