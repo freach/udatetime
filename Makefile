@@ -12,9 +12,11 @@ clean:
 	rm -fr dist_eggs
 
 package: clean
-	python setup.py bdist bdist_egg sdist
+	python setup.py bdist sdist
+	python setup.py bdist_egg
 
 release: clean
-	python setup.py bdist bdist_egg sdist upload
+	python setup.py bdist sdist upload
+	python setup.py bdist_egg upload
 
 .PHONY: clean package release
