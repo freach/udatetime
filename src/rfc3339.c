@@ -339,19 +339,21 @@ static void _timestamp_to_date_time(double timestamp, date_time_struct *now,
     timestamp += (offset * MINUTE_IN_SECS);
 
     time_t t = (time_t)timestamp;
-    double fraction = (timestamp - (double)t) * 0.000001;
-    int us = fraction >= 0.0 ?\
+    int fraction = (int)((timestamp - (int)timestamp) * 1000000);
+    fraction = fraction >= 0.0 ?\
         (int)floor(fraction + 0.5) : (int)ceil(fraction - 0.5);
 
-    if (us < 0) {
+    if (fraction < 0) {
         t -= 1;
-        us += 1000000;
+        fraction += 1000000;
     }
 
-    if (us == 1000000) {
+    if (fraction == 1000000) {
         t += 1;
-        us = 0;
+        fraction = 0;
     }
+
+    printf("%f %d %d\n", timestamp, (int)timestamp, fraction);
 
     struct tm *ts = NULL;
     ts = gmtime(&t);
@@ -365,7 +367,7 @@ static void _timestamp_to_date_time(double timestamp, date_time_struct *now,
     (*now).time.hour = (*ts).tm_hour;
     (*now).time.minute = (*ts).tm_min;
     (*now).time.second = (*ts).tm_sec;
-    (*now).time.fraction = us; // sec fractions in microseconds
+    (*now).time.fraction = fraction; // sec fractions in microseconds
     (*now).time.offset = offset;
     (*now).time.ok = 1;
 
