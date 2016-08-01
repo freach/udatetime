@@ -39,6 +39,9 @@ datetime.datetime(2016, 7, 29, 8, 15, 36, 184762, tzinfo=+00:00)
 
 >>> udatetime.fromtimestamp(time.time())
 datetime.datetime(2016, 7, 30, 17, 45, 1, 536586, tzinfo=+02:00)
+
+>>> udatetime.utcfromtimestamp(time.time())
+datetime.datetime(2016, 8, 1, 10, 14, 53, tzinfo=+00:00)
 ```
 
 ## Installation
@@ -108,6 +111,11 @@ Difference: 82%
 datetime_fromtimestamp 1.76945400238
 udatetime_fromtimestamp 0.237877845764
 Difference: 86%
+
+============ benchmark_utcfromtimestamp
+datetime_utcfromtimestamp 0.547920942307
+udatetime_utcfromtimestamp 0.284152984619
+Difference: 48%
 ```
 
 ## Why RFC3339
