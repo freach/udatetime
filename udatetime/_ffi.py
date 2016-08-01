@@ -1,9 +1,15 @@
+from datetime import tzinfo, timedelta, datetime
+from glob import glob
 import os.path
 from cffi import FFI
-from datetime import tzinfo, timedelta, datetime
 
-# pip install cffi
-# sudo apt-get install libffi-dev
+'''
+Requirements:
+pip install cffi
+sudo apt-get install libffi-dev
+
+Can use, but should not because slooooow...
+'''
 
 file_base = os.path.dirname(__file__)
 
@@ -46,7 +52,8 @@ typedef struct {
 
 RFC3999_CAPI CAPI;
 ''')
-C = ffi.dlopen('%s/../rfc3339.so' % file_base)
+
+C = ffi.dlopen(glob('%s/../rfc3339*.so' % file_base)[0])
 
 
 class TZFixedOffset(tzinfo):

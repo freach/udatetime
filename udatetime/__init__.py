@@ -1,16 +1,35 @@
 # -*- coding: utf-8 -*-
+import sys
 
-from rfc3339 import (
-    utcnow,
-    now,
-    from_rfc3339_string as from_string,
-    to_rfc3339_string as to_string,
-    utcnow_to_string,
-    now_to_string,
-    from_timestamp as fromtimestamp,
-    from_utctimestamp as utcfromtimestamp,
-    TZFixedOffset
-)
+try:
+    import __pypy__
+except ImportError:
+    __pypy__ = None
+
+if __pypy__ or sys.version_info.major == 3:
+    from udatetime._ffi import (
+        utcnow,
+        now,
+        from_rfc3339_string as from_string,
+        to_rfc3339_string as to_string,
+        utcnow_to_string,
+        now_to_string,
+        from_timestamp as fromtimestamp,
+        from_utctimestamp as utcfromtimestamp,
+        TZFixedOffset
+    )
+else:
+    from rfc3339 import (
+        utcnow,
+        now,
+        from_rfc3339_string as from_string,
+        to_rfc3339_string as to_string,
+        utcnow_to_string,
+        now_to_string,
+        from_timestamp as fromtimestamp,
+        from_utctimestamp as utcfromtimestamp,
+        TZFixedOffset
+    )
 
 __all__ = [
     'utcnow', 'now', 'from_string', 'to_string', 'utcnow_to_string',
