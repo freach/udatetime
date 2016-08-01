@@ -80,6 +80,16 @@ def benchmark_fromtimestamp():
 
     return (datetime_fromtimestamp, udatetime_fromtimestamp)
 
+
+def benchmark_utcfromtimestamp():
+    def datetime_utcfromtimestamp():
+        datetime.utcfromtimestamp(TIME)
+
+    def udatetime_utcfromtimestamp():
+        udatetime.utcfromtimestamp(TIME)
+
+    return (datetime_utcfromtimestamp, udatetime_utcfromtimestamp)
+
 if __name__ == '__main__':
     import timeit
 
