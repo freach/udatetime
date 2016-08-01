@@ -68,7 +68,7 @@ static int _get_local_utc_offset(void) {
 /* Get current time using gettimeofday(), ftime() or time() depending on
  * support.
  */
-static double gettime(void) {
+static double _gettime(void) {
 #if defined(HAVE_GETTIMEOFDAY)
     // => Use gettimeofday() in usec
     struct timeval t;
@@ -376,7 +376,7 @@ static void _timestamp_to_date_time(double timestamp, date_time_struct *now,
  * Create date-time with current values (time now) with given timezone offset
  * offset = UTC offset in minutes
  */
-#define _now(now, offset) _timestamp_to_date_time(gettime(), now, offset)
+#define _now(now, offset) _timestamp_to_date_time(_gettime(), now, offset)
 
 /*
  * Create date-time with current values in UTC
