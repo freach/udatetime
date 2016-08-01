@@ -36,6 +36,9 @@ datetime.datetime(2016, 7, 29, 8, 15, 36, 184762, tzinfo=+00:00)
 
 >>> udatetime.to_string(udatetime.utcnow() - timedelta(hours=6))
 '2016-07-29T02:16:05.770358+00:00'
+
+>>> udatetime.fromtimestamp(time.time())
+datetime.datetime(2016, 7, 30, 17, 45, 1, 536586, tzinfo=+02:00)
 ```
 
 ## Installation
@@ -100,6 +103,11 @@ Difference: 58%
 datetime_now_to_string 3.82465291023
 udatetime_now_to_string 0.66116809845
 Difference: 82%
+
+============ benchmark_fromtimestamp
+datetime_fromtimestamp 1.76945400238
+udatetime_fromtimestamp 0.237877845764
+Difference: 86%
 ```
 
 ## Why RFC3339
