@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
+from time import time
 import udatetime
 
 
@@ -42,6 +43,20 @@ class Test(unittest.TestCase):
         self.assertEqual(dt.second, 20)
         self.assertEqual(dt.microsecond, 123000)
         self.assertEqual(udatetime.to_string(dt), rfc3339)
+
+    def test_fromtimestamp(self):
+        for t in (time(), 2):
+            dt = datetime.fromtimestamp(t)
+            udt = udatetime.fromtimestamp(t)
+
+            self.assertIsInstance(udt, datetime)
+            self.assertEqual(udt.year, dt.year)
+            self.assertEqual(udt.month, dt.month)
+            self.assertEqual(udt.day, dt.day)
+            self.assertEqual(udt.hour, dt.hour)
+            self.assertEqual(udt.minute, dt.minute)
+            self.assertEqual(udt.second, dt.second)
+            # self.assertEqual(udt.microsecond, dt.microsecond)
 
     def test_broken_from_string(self):
         invalid = [
