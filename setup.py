@@ -1,5 +1,11 @@
 from setuptools import setup, find_packages, Extension
 import os
+import sys
+
+try:
+    import __pypy__
+except ImportError:
+    __pypy__ = None
 
 __version__ = None
 here = os.path.abspath(os.path.dirname(__file__))
@@ -14,9 +20,19 @@ with open('%s/version.txt' % here) as f:
 with open('%s/README.md' % here) as f:
     readme = f.readline().strip()
 
+macros = []
+
+if __pypy__ is not None:
+    macros.append(('_PYPY', '1'))
+elif sys.version_info.major == 2:
+    macros.append(('_PYTHON2', '1'))
+elif sys.version_info.major == 3:
+    macros.append(('_PYTHON3', '1'))
+
 rfc3339 = Extension(
     'rfc3339',
     ['./src/rfc3339.c'],
+    define_macros=macros,
     extra_compile_args=['-Ofast', '-std=c99']
 )
 
