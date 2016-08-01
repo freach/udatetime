@@ -1,6 +1,5 @@
 import unittest
 from datetime import datetime, timedelta
-from time import time
 import udatetime
 
 
@@ -17,6 +16,7 @@ class Test(unittest.TestCase):
         self.assertEqual(now.hour, dt_now.hour)
         self.assertEqual(now.minute, dt_now.minute)
         self.assertEqual(now.second, dt_now.second)
+        # self.assertEqual(now.microsecond, dt_now.microsecond)
 
     def test_now(self):
         dt_now = datetime.now()
@@ -29,6 +29,7 @@ class Test(unittest.TestCase):
         self.assertEqual(now.hour, dt_now.hour)
         self.assertEqual(now.minute, dt_now.minute)
         self.assertEqual(now.second, dt_now.second)
+        # self.assertEqual(now.microsecond, dt_now.microsecond)
 
     def test_from_and_to_string(self):
         rfc3339 = '2016-07-15T12:33:20.123000+01:30'
@@ -176,6 +177,12 @@ class Test(unittest.TestCase):
 
         self.assertIsInstance(offset, timedelta)
         self.assertEqual(offset.total_seconds() / 60, -120)
+
+    def test_precision(self):
+        t = 1469897308.549871
+        dt = datetime.fromtimestamp(t)
+        udt = udatetime.fromtimestamp(t)
+        self.assertEqual(udt.microsecond, dt.microsecond)
 
 if __name__ == '__main__':
     unittest.main()
