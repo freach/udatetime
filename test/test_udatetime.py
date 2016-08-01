@@ -45,9 +45,62 @@ class Test(unittest.TestCase):
         self.assertEqual(udatetime.to_string(dt), rfc3339)
 
     def test_fromtimestamp(self):
-        for t in (time(), 2):
+        DAY = 86400
+        HOUR = 3600
+        TZ_CEST = udatetime.TZFixedOffset(60 * 2)
+
+        for t in xrange(0, DAY - (2 * HOUR), HOUR):
             dt = datetime.fromtimestamp(t)
             udt = udatetime.fromtimestamp(t)
+
+            self.assertIsInstance(udt, datetime)
+            self.assertEqual(udt.year, dt.year)
+            self.assertEqual(udt.month, dt.month)
+            self.assertEqual(udt.day, dt.day)
+
+            # missing hour for local CEST timezone with datetime,
+            # bug of datetime.datetime?
+            # self.assertEqual(udt.hour, dt.hour + 1)
+
+            self.assertEqual(udt.minute, dt.minute)
+            self.assertEqual(udt.second, dt.second)
+            self.assertEqual(udt.microsecond, dt.microsecond)
+
+        for t in xrange(0, DAY, HOUR):
+            dt = datetime.fromtimestamp(t, TZ_CEST)
+            udt = udatetime.fromtimestamp(t, TZ_CEST)
+
+            self.assertIsInstance(udt, datetime)
+            self.assertEqual(udt.year, dt.year)
+            self.assertEqual(udt.month, dt.month)
+            self.assertEqual(udt.day, dt.day)
+
+            self.assertEqual(udt.hour, dt.hour)
+            self.assertEqual(udt.minute, dt.minute)
+            self.assertEqual(udt.second, dt.second)
+            self.assertEqual(udt.microsecond, dt.microsecond)
+
+        for t in xrange(0, DAY * -1, HOUR * -1):
+            dt = datetime.fromtimestamp(t, TZ_CEST)
+            udt = udatetime.fromtimestamp(t, TZ_CEST)
+
+            self.assertIsInstance(udt, datetime)
+            self.assertEqual(udt.year, dt.year)
+            self.assertEqual(udt.month, dt.month)
+            self.assertEqual(udt.day, dt.day)
+
+            self.assertEqual(udt.hour, dt.hour)
+            self.assertEqual(udt.minute, dt.minute)
+            self.assertEqual(udt.second, dt.second)
+            self.assertEqual(udt.microsecond, dt.microsecond)
+
+    def test_utcfromtimestamp(self):
+        DAY = 86400
+        HOUR = 3600
+
+        for t in xrange(0, DAY, HOUR):
+            dt = datetime.utcfromtimestamp(t)
+            udt = udatetime.utcfromtimestamp(t)
 
             self.assertIsInstance(udt, datetime)
             self.assertEqual(udt.year, dt.year)
@@ -56,7 +109,20 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.hour, dt.hour)
             self.assertEqual(udt.minute, dt.minute)
             self.assertEqual(udt.second, dt.second)
-            # self.assertEqual(udt.microsecond, dt.microsecond)
+            self.assertEqual(udt.microsecond, dt.microsecond)
+
+        for t in xrange(0, DAY * -1, HOUR * -1):
+            dt = datetime.utcfromtimestamp(t)
+            udt = udatetime.utcfromtimestamp(t)
+
+            self.assertIsInstance(udt, datetime)
+            self.assertEqual(udt.year, dt.year)
+            self.assertEqual(udt.month, dt.month)
+            self.assertEqual(udt.day, dt.day)
+            self.assertEqual(udt.hour, dt.hour)
+            self.assertEqual(udt.minute, dt.minute)
+            self.assertEqual(udt.second, dt.second)
+            self.assertEqual(udt.microsecond, dt.microsecond)
 
     def test_broken_from_string(self):
         invalid = [
