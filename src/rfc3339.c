@@ -2,7 +2,7 @@
 #include <datetime.h>
 #include <structmember.h>
 
-#define RFC3339_VERSION "0.0.2"
+#define RFC3339_VERSION "0.0.3"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -53,12 +53,16 @@ static void _strip_spaces(char *source) {
  * TODO: Cross platform compatibility
  */
 static int _get_local_utc_offset(void) {
-    struct tm *info;
-    time_t n = time(NULL);
-    info = localtime(&n);
+    if (!local_utc_offset) {
+        struct tm *info;
+        time_t n = time(NULL);
+        info = localtime(&n);
 
-    // tm_gmtoff requires POSIX
-    return (int)(*info).tm_gmtoff / HOUR_IN_MINS;
+        // tm_gmtoff requires POSIX
+        local_utc_offset = (int)(*info).tm_gmtoff / HOUR_IN_MINS;
+    }
+
+    return local_utc_offset;
 }
 
 /* Get current time using gettimeofday(), ftime() or time() depending on
@@ -327,17 +331,24 @@ static void _parse_date_time(char *datetime_string, date_time_struct *dt) {
 }
 
 /*
- * Create date-time with current values (time now) with given timezone offset
- * offset = UTC offset in minutes
+ * Convert positive timestamp double to date_time_struct
  */
-static void _now(date_time_struct* now, int offset) {
-    unsigned int n, sec, min, hour, mday, mon, year, wday, days, leap, yday;
+static void _ptimestamp_to_date_time(double timestamp, date_time_struct *now,
+                                    int offset) {
+    if (timestamp < 0.0)
+        return;
 
-    double t = gettime();
-    unsigned int tsec = (unsigned int)t;
-    unsigned int tusec = (unsigned int)((t - (double)tsec) * 1000000);
+    struct tm *t = NULL;
+    time_t ts = (time_t) ((unsigned int)timestamp);
+    t = gmtime(&ts);
 
-    n = tsec + (offset * MINUTE_IN_SECS);
+    int yday;
+    unsigned int n, sec, min, hour, mday, mon, year, wday, days, leap;
+
+    n = (unsigned int)timestamp;
+    n += (offset * MINUTE_IN_SECS);
+    unsigned int tusec = (unsigned int)((timestamp - (double)n) * 1000000);
+
     days = n / DAY_IN_SECS;
     wday = (4 + days) % 7;
 
@@ -367,6 +378,8 @@ static void _now(date_time_struct* now, int offset) {
         mon += 2;
     }
 
+    printf("gmyear: %d, year: %d\n", (*t).tm_year, year);
+
     (*now).date.year = year;
     (*now).date.month = mon;
     (*now).date.day = mday;
@@ -380,6 +393,22 @@ static void _now(date_time_struct* now, int offset) {
 
     (*now).ok = 1;
 }
+
+/*
+ * Create date-time with current values (time now) with given timezone offset
+ * offset = UTC offset in minutes
+ */
+#define _now(now, offset) _ptimestamp_to_date_time(gettime(), now, offset)
+
+/*
+ * Create date-time with current values in UTC
+ */
+#define _utcnow(now) _now(now, 0)
+
+/*
+ * Create date-time with current values in systems local timezone
+ */
+#define _localnow(now) _now(now, _get_local_utc_offset())
 
 /*
  * Create RFC3339 date-time string
@@ -405,21 +434,6 @@ static void _format_date_time(date_time_struct *dt, char* datetime_string) {
 }
 
 /*
- * Create date-time with current values in UTC
- */
-#define _utcnow(now) _now(now, 0)
-
-/*
- * Create date-time with current values in systems local timezone
- */
-static void _localnow(date_time_struct* now) {
-    if (!local_utc_offset)
-        local_utc_offset = _get_local_utc_offset();
-    return _now(now, local_utc_offset);
-}
-
-
-/*
  * ***======================= CPython Section =======================***
  */
 
@@ -431,7 +445,7 @@ typedef struct {
     int offset;
 } FixedOffset;
 
-/**
+/*
  * def __init__(self, offset):
  *     self.offset = offset
  */
@@ -444,7 +458,7 @@ static int FixedOffset_init(FixedOffset *self, PyObject *args, PyObject *kwargs)
     return 0;
 }
 
-/**
+/*
  * def utcoffset(self, dt):
  *     return timedelta(seconds=self.offset * 60)
  */
@@ -452,7 +466,7 @@ static PyObject *FixedOffset_utcoffset(FixedOffset *self, PyObject *args) {
     return PyDelta_FromDSU(0, self->offset * 60, 0);
 }
 
-/**
+/*
  * def dst(self, dt):
  *     return timedelta(seconds=self.offset * 60)
  */
@@ -460,7 +474,7 @@ static PyObject *FixedOffset_dst(FixedOffset *self, PyObject *args) {
     return PyDelta_FromDSU(0, self->offset * 60, 0);
 }
 
-/**
+/*
  * def tzname(self, dt):
  *     sign = '+'
  *     if self.offset < 0:
@@ -484,7 +498,7 @@ static PyObject *FixedOffset_tzname(FixedOffset *self, PyObject *args) {
     return PyString_FromString(tzname);
 }
 
-/**
+/*
  * def __repr__(self):
  *     return self.tzname()
  */
@@ -492,15 +506,24 @@ static PyObject *FixedOffset_repr(FixedOffset *self) {
     return FixedOffset_tzname(self, NULL);
 }
 
+/*
+ * Destructor
+ */
 static void FixedOffset_dealloc(FixedOffset *self) {
     self->ob_type->tp_free((PyObject*)self);
 }
 
+/*
+ * Class member / class attributes
+ */
 static PyMemberDef FixedOffset_members[] = {
     {"offset", T_INT, offsetof(FixedOffset, offset), 0, "UTC offset"},
     {NULL}
 };
 
+/*
+ * Class methods
+ */
 static PyMethodDef FixedOffset_methods[] = {
     {"utcoffset", (PyCFunction)FixedOffset_utcoffset, METH_VARARGS, ""},
     {"dst",       (PyCFunction)FixedOffset_dst,       METH_VARARGS, ""},
@@ -613,9 +636,7 @@ static PyObject *from_rfc3339_string(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    PyObject *res = dtstruct_to_datetime_obj(&dt);
-
-    return res;
+    return dtstruct_to_datetime_obj(&dt);
 }
 
 static PyObject *to_rfc3339_string(PyObject *self, PyObject *args) {
@@ -632,7 +653,7 @@ static PyObject *to_rfc3339_string(PyObject *self, PyObject *args) {
     PyDateTime_DateTime *datetime_obj = (PyDateTime_DateTime *)obj;
     int offset = 0;
 
-    // TODO: Support all kinds of tzinfo classes
+    // TODO: Support all tzinfo subclasses by calling utcoffset()
     if (datetime_obj->hastzinfo) {
         if (Py_TYPE(datetime_obj->tzinfo) == &FixedOffset_type) {
             FixedOffset *tzinfo = (FixedOffset *)datetime_obj->tzinfo;
@@ -669,6 +690,58 @@ static PyObject *to_rfc3339_string(PyObject *self, PyObject *args) {
     return PyString_FromString(datetime_string);
 }
 
+static PyObject *from_timestamp(PyObject *self, PyObject *args, PyObject *kw) {
+    double timestamp;
+    PyObject *tz = Py_None;
+    int offset = _get_local_utc_offset();
+    static char *keywords[] = {"timestamp", "tz", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kw, "d|O:fromtimestamp",
+                                     keywords, &timestamp, &tz))
+        return NULL;
+
+    if(timestamp < 0) {
+        PyErr_Format(
+            PyExc_ValueError, "Negative timestamps are not supported, yet."
+        );
+        return NULL;
+    }
+
+    // TODO: Support all tzinfo subclasses by calling utcoffset()
+    if (tz && tz != Py_None) {
+        if (Py_TYPE(tz) != &FixedOffset_type) {
+            PyErr_Format(PyExc_TypeError, "tz must be of type TZFixedOffset.");
+            return NULL;
+        } else {
+            offset = ((FixedOffset *)tz)->offset;
+        }
+    }
+
+    date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
+    _ptimestamp_to_date_time(timestamp, &dt, offset);
+
+
+    if (dt.ok != 1) {
+        if (dt.date.ok != 1) {
+            PyErr_Format(
+                PyExc_ValueError,
+                "Invalid RFC3339 date-time string. Date invalid."
+            );
+        } else if (dt.time.ok != 1) {
+            PyErr_Format(
+                PyExc_ValueError,
+                "Invalid RFC3339 date-time string. Time invalid."
+            );
+        } else {
+            PyErr_Format(PyExc_ValueError, "Not supposed to happen!");
+        }
+
+        return NULL;
+    }
+
+    return dtstruct_to_datetime_obj(&dt);
+}
+
 static PyObject *utcnow_to_string(PyObject *self) {
     date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
     _utcnow(&dt);
@@ -689,9 +762,9 @@ static PyObject *localnow_to_string(PyObject *self) {
     return PyString_FromString(datetime_string);
 }
 
-static PyObject *bench_c(PyObject *self) {
-    return Py_None;
-}
+// static PyObject *bench_c(PyObject *self) {
+//     return Py_None;
+// }
 
 static PyMethodDef rfc3339_methods[] = {
     {
@@ -705,6 +778,12 @@ static PyMethodDef rfc3339_methods[] = {
         (PyCFunction) localnow,
         METH_NOARGS,
         "datetime aware object in local timezone with current date and time."
+    },
+    {
+        "from_timestamp",
+        (PyCFunction) from_timestamp,
+        METH_VARARGS | METH_KEYWORDS,
+        PyDoc_STR("timestamp[, tz] -> tz's local time from POSIX timestamp.")
     },
     {
         "from_rfc3339_string",
@@ -730,17 +809,17 @@ static PyMethodDef rfc3339_methods[] = {
         METH_NOARGS,
         "Local date and time RFC3339 compliant date-time string."
     },
-    {
-        "bench_c",
-        (PyCFunction) bench_c,
-        METH_NOARGS,
-        "Benchmark C code."
-    },
+    // {
+    //     "bench_c",
+    //     (PyCFunction) bench_c,
+    //     METH_NOARGS,
+    //     "Benchmark C code."
+    // },
     {NULL}
 };
 
 PyMODINIT_FUNC initrfc3339(void) {
-    local_utc_offset = _get_local_utc_offset();
+    _get_local_utc_offset(); // call once to set local_utc_offset
 
     PyObject *m;
     PyObject *version_string;
