@@ -1,6 +1,17 @@
+#define _GNU_SOURCE 1
+
+#ifdef _PYTHON2
 #include <Python.h>
 #include <datetime.h>
 #include <structmember.h>
+#endif
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
 
 #define RFC3339_VERSION "0.0.3"
 #define DAY_IN_SECS 86400
@@ -54,12 +65,16 @@ static void _strip_spaces(char *source) {
  */
 static int _get_local_utc_offset(void) {
     if (!local_utc_offset) {
-        struct tm *info;
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+        struct tm info = {0};
         time_t n = time(NULL);
-        info = localtime(&n);
+        localtime_r(&n, &info);
 
         // tm_gmtoff requires POSIX
-        local_utc_offset = (int)(*info).tm_gmtoff / HOUR_IN_MINS;
+        local_utc_offset = (int)info.tm_gmtoff / HOUR_IN_MINS;
+#else
+        local_utc_offset = 0;
+#endif
     }
 
     return local_utc_offset;
@@ -381,12 +396,16 @@ static void _timestamp_to_date_time(double timestamp, date_time_struct *now,
 /*
  * Create date-time with current values in UTC
  */
-#define _utcnow(now) _now(now, 0)
+static void _utcnow(date_time_struct *now) {
+    _now(now, 0);
+}
 
 /*
  * Create date-time with current values in systems local timezone
  */
-#define _localnow(now) _now(now, _get_local_utc_offset())
+static void _localnow(date_time_struct *now) {
+    _now(now, _get_local_utc_offset());
+}
 
 /*
  * Create RFC3339 date-time string
@@ -411,10 +430,41 @@ static void _format_date_time(date_time_struct *dt, char* datetime_string) {
     );
 }
 
+
+/*
+ * ***======================= C API =======================***
+ */
+
+typedef struct {
+    double (*get_time)(void);
+    void (*parse_date)(char*, date_struct*);
+    void (*parse_time)(char*, time_struct*);
+    void (*parse_date_time)(char*, date_time_struct*);
+    void (*timestamp_to_date_time)(double, date_time_struct*, int);
+    void (*format_date_time)(date_time_struct*, char*);
+    void (*utcnow)(date_time_struct*);
+    void (*localnow)(date_time_struct*);
+    int (*get_local_utc_offset)(void);
+} RFC3999_CAPI;
+
+extern RFC3999_CAPI CAPI = {
+    _gettime,
+    _parse_date,
+    _parse_time,
+    _parse_date_time,
+    _timestamp_to_date_time,
+    _format_date_time,
+    _utcnow,
+    _localnow,
+    _get_local_utc_offset
+};
+
+
 /*
  * ***======================= CPython Section =======================***
  */
 
+#ifdef _PYTHON2
 /*
  * class FixedOffset(tzinfo):
  */
@@ -813,12 +863,6 @@ static PyMethodDef rfc3339_methods[] = {
         METH_NOARGS,
         PyDoc_STR("Local date and time RFC3339 compliant date-time string.")
     },
-    // {
-    //     "bench_c",
-    //     (PyCFunction) bench_c,
-    //     METH_NOARGS,
-    //     "Benchmark C code."
-    // },
     {NULL}
 };
 
@@ -849,3 +893,4 @@ PyMODINIT_FUNC initrfc3339(void) {
     Py_INCREF(&FixedOffset_type);
     PyModule_AddObject(m, "TZFixedOffset", (PyObject *)&FixedOffset_type);
 }
+#endif
