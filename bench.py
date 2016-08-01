@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import time
 import udatetime
 
 RFC3339_DATE = '2016-07-18'
@@ -7,6 +8,7 @@ RFC3339_DATE_TIME = RFC3339_DATE + 'T' + RFC3339_TIME
 RFC3339_DATE_TIME_DTLIB = RFC3339_DATE_TIME[:-6]
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 DATETIME_OBJ = datetime.strptime(RFC3339_DATE_TIME_DTLIB, DATE_TIME_FORMAT)
+TIME = time()
 
 
 def benchmark_parse():
@@ -68,6 +70,15 @@ def benchmark_now_to_string():
 
     return (datetime_now_to_string, udatetime_now_to_string)
 
+
+def benchmark_fromtimestamp():
+    def datetime_fromtimestamp():
+        datetime.fromtimestamp(TIME)
+
+    def udatetime_fromtimestamp():
+        udatetime.fromtimestamp(TIME)
+
+    return (datetime_fromtimestamp, udatetime_fromtimestamp)
 
 if __name__ == '__main__':
     import timeit
