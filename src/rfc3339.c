@@ -331,65 +331,43 @@ static void _parse_date_time(char *datetime_string, date_time_struct *dt) {
 }
 
 /*
- * Convert positive timestamp double to date_time_struct
+ * Convert positive and negative timestamp double to date_time_struct
+ * based on gmtime
  */
-static void _ptimestamp_to_date_time(double timestamp, date_time_struct *now,
+static void _timestamp_to_date_time(double timestamp, date_time_struct *now,
                                     int offset) {
-    if (timestamp < 0.0)
-        return;
+    timestamp += (offset * MINUTE_IN_SECS);
 
-    struct tm *t = NULL;
-    time_t ts = (time_t) ((unsigned int)timestamp);
-    t = gmtime(&ts);
+    time_t t = (time_t)timestamp;
+    double fraction = (timestamp - (double)t) * 0.000001;
+    int us = fraction >= 0.0 ?\
+        (int)floor(fraction + 0.5) : (int)ceil(fraction - 0.5);
 
-    int yday;
-    unsigned int n, sec, min, hour, mday, mon, year, wday, days, leap;
-
-    n = (unsigned int)timestamp;
-    n += (offset * MINUTE_IN_SECS);
-    unsigned int tusec = (unsigned int)((timestamp - (double)n) * 1000000);
-
-    days = n / DAY_IN_SECS;
-    wday = (4 + days) % 7;
-
-    n %= DAY_IN_SECS;
-    hour = n / HOUR_IN_SECS;
-    n %= HOUR_IN_SECS;
-    min = n / HOUR_IN_MINS;
-    sec = n % MINUTE_IN_SECS;
-
-    days = days + 719468;
-    year = (days + 2) * 400 / 146097;
-    yday = days - (365 * year + year / 4 - year / 100 + year / 400);
-
-    if (yday < 0) {
-        leap = (year % 4 == 0) && (year % 100 || (year % 400 == 0));
-        yday = 365 + leap + yday;
-        year--;
+    if (us < 0) {
+        t -= 1;
+        us += 1000000;
     }
 
-    mon = (yday + 31) * 10 / 306;
-    mday = yday - (367 * mon / 12 - 30) + 1;
-
-    if (yday >= 306) {
-        year++;
-        mon -= 10;
-    } else {
-        mon += 2;
+    if (us == 1000000) {
+        t += 1;
+        us = 0;
     }
 
-    printf("gmyear: %d, year: %d\n", (*t).tm_year, year);
+    struct tm *ts = NULL;
+    ts = gmtime(&t);
 
-    (*now).date.year = year;
-    (*now).date.month = mon;
-    (*now).date.day = mday;
-    (*now).date.wday = (wday) + 1;
+    (*now).date.year = (*ts).tm_year + 1900;
+    (*now).date.month = (*ts).tm_mon + 1;
+    (*now).date.day = (*ts).tm_mday;
+    (*now).date.wday = (*ts).tm_wday + 1;
+    (*now).date.ok = 1;
 
-    (*now).time.hour = hour;
-    (*now).time.minute = min;
-    (*now).time.second = sec;
-    (*now).time.fraction = tusec; // sec fractions in microseconds
+    (*now).time.hour = (*ts).tm_hour;
+    (*now).time.minute = (*ts).tm_min;
+    (*now).time.second = (*ts).tm_sec;
+    (*now).time.fraction = us; // sec fractions in microseconds
     (*now).time.offset = offset;
+    (*now).time.ok = 1;
 
     (*now).ok = 1;
 }
@@ -398,7 +376,7 @@ static void _ptimestamp_to_date_time(double timestamp, date_time_struct *now,
  * Create date-time with current values (time now) with given timezone offset
  * offset = UTC offset in minutes
  */
-#define _now(now, offset) _ptimestamp_to_date_time(gettime(), now, offset)
+#define _now(now, offset) _timestamp_to_date_time(gettime(), now, offset)
 
 /*
  * Create date-time with current values in UTC
@@ -597,6 +575,34 @@ static PyObject *dtstruct_to_datetime_obj(date_time_struct *dt) {
     return Py_None;
 }
 
+static void check_timestamp_platform_support(double timestamp) {
+    double diff = timestamp - (double)((time_t)timestamp);
+
+    if (diff <= -1.0 || diff >= 1.0) {
+        PyErr_SetString(
+            PyExc_ValueError, "timestamp out of range for platform time_t"
+        );
+    }
+}
+
+static void check_date_time_struct(date_time_struct *dt) {
+    if ((*dt).ok != 1) {
+        if ((*dt).date.ok != 1) {
+            PyErr_SetString(
+                PyExc_ValueError,
+                "Invalid RFC3339 date-time string. Date invalid."
+            );
+        } else if ((*dt).time.ok != 1) {
+            PyErr_SetString(
+                PyExc_ValueError,
+                "Invalid RFC3339 date-time string. Time invalid."
+            );
+        } else {
+            PyErr_SetString(PyExc_ValueError, "Not supposed to happen!");
+        }
+    }
+}
+
 static PyObject *utcnow(PyObject *self) {
     date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
     _utcnow(&dt);
@@ -618,23 +624,9 @@ static PyObject *from_rfc3339_string(PyObject *self, PyObject *args) {
     date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
     _parse_date_time(rfc3339_string, &dt);
 
-    if (dt.ok != 1) {
-        if (dt.date.ok != 1) {
-            PyErr_Format(
-                PyExc_ValueError,
-                "Invalid RFC3339 date-time string. Date invalid."
-            );
-        } else if (dt.time.ok != 1) {
-            PyErr_Format(
-                PyExc_ValueError,
-                "Invalid RFC3339 date-time string. Time invalid."
-            );
-        } else {
-            PyErr_Format(PyExc_ValueError, "Not supposed to happen!");
-        }
-
+    check_date_time_struct(&dt);
+    if(PyErr_Occurred())
         return NULL;
-    }
 
     return dtstruct_to_datetime_obj(&dt);
 }
@@ -696,16 +688,13 @@ static PyObject *from_timestamp(PyObject *self, PyObject *args, PyObject *kw) {
     int offset = _get_local_utc_offset();
     static char *keywords[] = {"timestamp", "tz", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kw, "d|O:fromtimestamp",
+    if (!PyArg_ParseTupleAndKeywords(args, kw, "d|O",
                                      keywords, &timestamp, &tz))
         return NULL;
 
-    if(timestamp < 0) {
-        PyErr_Format(
-            PyExc_ValueError, "Negative timestamps are not supported, yet."
-        );
+    check_timestamp_platform_support(timestamp);
+    if(PyErr_Occurred())
         return NULL;
-    }
 
     // TODO: Support all tzinfo subclasses by calling utcoffset()
     if (tz && tz != Py_None) {
@@ -718,26 +707,31 @@ static PyObject *from_timestamp(PyObject *self, PyObject *args, PyObject *kw) {
     }
 
     date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
-    _ptimestamp_to_date_time(timestamp, &dt, offset);
+    _timestamp_to_date_time(timestamp, &dt, offset);
 
-
-    if (dt.ok != 1) {
-        if (dt.date.ok != 1) {
-            PyErr_Format(
-                PyExc_ValueError,
-                "Invalid RFC3339 date-time string. Date invalid."
-            );
-        } else if (dt.time.ok != 1) {
-            PyErr_Format(
-                PyExc_ValueError,
-                "Invalid RFC3339 date-time string. Time invalid."
-            );
-        } else {
-            PyErr_Format(PyExc_ValueError, "Not supposed to happen!");
-        }
-
+    check_date_time_struct(&dt);
+    if(PyErr_Occurred())
         return NULL;
-    }
+
+    return dtstruct_to_datetime_obj(&dt);
+}
+
+static PyObject *from_utctimestamp(PyObject *self, PyObject *args) {
+    double timestamp;
+
+    if (!PyArg_ParseTuple(args, "d", &timestamp))
+        return NULL;
+
+    check_timestamp_platform_support(timestamp);
+    if(PyErr_Occurred())
+        return NULL;
+
+    date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
+    _timestamp_to_date_time(timestamp, &dt, 0);
+
+    check_date_time_struct(&dt);
+    if(PyErr_Occurred())
+        return NULL;
 
     return dtstruct_to_datetime_obj(&dt);
 }
@@ -784,6 +778,14 @@ static PyMethodDef rfc3339_methods[] = {
         (PyCFunction) from_timestamp,
         METH_VARARGS | METH_KEYWORDS,
         PyDoc_STR("timestamp[, tz] -> tz's local time from POSIX timestamp.")
+    },
+    {
+        "from_utctimestamp",
+        (PyCFunction)from_utctimestamp,
+        METH_VARARGS,
+        PyDoc_STR(
+            "timestamp -> UTC datetime from a POSIX timestamp (like time.time())."
+        )
     },
     {
         "from_rfc3339_string",
