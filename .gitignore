@@ -6,3 +6,4 @@ docs/_build/
 *.pyc
 *.swp
 *.so
+udatetime/__pycache__/
