@@ -765,13 +765,15 @@ static PyMethodDef rfc3339_methods[] = {
         "utcnow",
         (PyCFunction) utcnow,
         METH_NOARGS,
-        "datetime aware object in UTC with current date and time."
+        PyDoc_STR("datetime aware object in UTC with current date and time.")
     },
     {
         "now",
         (PyCFunction) localnow,
         METH_NOARGS,
-        "datetime aware object in local timezone with current date and time."
+        PyDoc_STR(
+            "datetime aware object in local timezone with current date and time."
+        )
     },
     {
         "from_timestamp",
@@ -791,25 +793,25 @@ static PyMethodDef rfc3339_methods[] = {
         "from_rfc3339_string",
         (PyCFunction) from_rfc3339_string,
         METH_VARARGS,
-        "Parse RFC3339 compliant date-time string."
+        PyDoc_STR("Parse RFC3339 compliant date-time string.")
     },
     {
         "to_rfc3339_string",
         (PyCFunction) to_rfc3339_string,
         METH_VARARGS,
-        "Serialize datetime to RFC3339 compliant date-time string."
+        PyDoc_STR("Serialize datetime to RFC3339 compliant date-time string.")
     },
     {
         "utcnow_to_string",
         (PyCFunction) utcnow_to_string,
         METH_NOARGS,
-        "Current UTC date and time RFC3339 compliant date-time string."
+        PyDoc_STR("Current UTC date and time RFC3339 compliant date-time string.")
     },
     {
         "now_to_string",
         (PyCFunction) localnow_to_string,
         METH_NOARGS,
-        "Local date and time RFC3339 compliant date-time string."
+        PyDoc_STR("Local date and time RFC3339 compliant date-time string.")
     },
     // {
     //     "bench_c",
