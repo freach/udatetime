@@ -1,7 +1,8 @@
-from datetime import tzinfo, timedelta, datetime
+from datetime import datetime
 from glob import glob
 import os.path
 from cffi import FFI
+from ._pure import TZFixedOffset
 
 '''
 Requirements:
@@ -54,28 +55,6 @@ RFC3999_CAPI CAPI;
 ''')
 
 C = ffi.dlopen(glob('%s/../rfc3339*.so' % file_base)[0])
-
-
-class TZFixedOffset(tzinfo):
-
-    def __init__(self, offset):
-        self.offset = offset
-
-    def utcoffset(self, dt=None):
-        return timedelta(seconds=self.offset * 60)
-
-    def dst(self, dt=None):
-        return timedelta(seconds=self.offset * 60)
-
-    def tzname(self, dt=None):
-        sign = '+'
-        if self.offset < 0:
-            sign = '-'
-
-        return "%s%d:%d" % (sign, self.offset / 60, self.offset % 60)
-
-    def __repr__(self):
-        return self.tzname()
 
 
 def new_date_time_struct():
