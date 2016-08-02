@@ -14,6 +14,25 @@ under the hood and code already using `datetime` should be able to easily
 switch to `udatetime`. All `datetime` objects created by `udatetime` are timezone
 aware.
 
+**Python 2**
+
+- Support: :heavy_check_mark:
+- Performance optimized: :heavy_check_mark:
+- Implementation: C
+
+**Python 3**
+
+- Support: :heavy_check_mark:
+- Performance optimized: :x: (only RFC3339 parser)
+- Implementation: Pure Python
+
+**PyPy**
+
+- Support: :heavy_check_mark:
+- Performance optimized: :x: (only RFC3339 parser)
+- Implementation: Pure Python
+
+
 ```python
 >>> udatetime.from_string("2016-07-15T12:33:20.123000+02:00")
 datetime.datetime(2016, 7, 15, 12, 33, 20, 123000, tzinfo=+02:00)
@@ -73,49 +92,145 @@ The benchmarks compare the performance of equivalent code of `datetime` and
 and takes the `min` of 3 repeats. You can run the benchmark yourself and see
 the results on your machine by executing the `bench.py` script.
 
+### Python 2.7
+
 ```
 $ python bench.py
 Executing benchmarks ...
 
-============ benchmark_format
-datetime_strftime 2.47099590302
-udatetime_format 0.729417085648
-Difference: 70%
-
-============ benchmark_now
-datetime_now 1.43802499771
-udatetime_now 0.206050157547
-Difference: 85%
-
 ============ benchmark_parse
-datetime_strptime 11.241353035
-udatetime_parse 1.14998006821
-Difference: 89%
+datetime_strptime 11.1304590702
+udatetime_parse 1.15330886841
+udatetime is 89% faster
 
-============ benchmark_utcnow_to_string
-datetime_utcnow_to_string 2.64023208618
-udatetime_utcnow_to_string 0.668451070786
-Difference: 74%
+============ benchmark_format
+datetime_strftime 2.11881709099
+udatetime_format 0.681449890137
+udatetime is 67% faster
 
 ============ benchmark_utcnow
-datetime_utcnow 0.509386062622
-udatetime_utcnow 0.209677934647
-Difference: 58%
+datetime_utcnow 0.510785102844
+udatetime_utcnow 0.250232934952
+udatetime is 51% faster
+
+============ benchmark_now
+datetime_now 1.47083210945
+udatetime_now 0.251370191574
+udatetime is 82% faster
+
+============ benchmark_utcnow_to_string
+datetime_utcnow_to_string 2.7153339386
+udatetime_utcnow_to_string 0.744527816772
+udatetime is 72% faster
 
 ============ benchmark_now_to_string
-datetime_now_to_string 3.82465291023
-udatetime_now_to_string 0.66116809845
-Difference: 82%
+datetime_now_to_string 3.9927649498
+udatetime_now_to_string 0.737413883209
+udatetime is 81% faster
 
 ============ benchmark_fromtimestamp
-datetime_fromtimestamp 1.76945400238
-udatetime_fromtimestamp 0.237877845764
-Difference: 86%
+datetime_fromtimestamp 1.48366808891
+udatetime_fromtimestamp 0.298361063004
+udatetime is 79% faster
 
 ============ benchmark_utcfromtimestamp
-datetime_utcfromtimestamp 0.547920942307
-udatetime_utcfromtimestamp 0.284152984619
-Difference: 48%
+datetime_utcfromtimestamp 0.551414012909
+udatetime_utcfromtimestamp 0.2882771492
+udatetime is 47% faster
+```
+
+### Python 3.5
+
+```
+$ python bench.py
+Executing benchmarks ...
+
+============ benchmark_parse
+datetime_strptime 10.420707688999755
+udatetime_parse 5.969888809000622
+udatetime is 42% faster
+
+============ benchmark_format
+datetime_strftime 3.093145213999378
+udatetime_format 3.409761550999974
+udatetime is 9% slower
+
+============ benchmark_utcnow
+datetime_utcnow 0.5723336070004734
+udatetime_utcnow 2.4757570670008135
+udatetime is 76% slower
+
+============ benchmark_now
+datetime_now 1.5356289419996756
+udatetime_now 3.681305574000362
+udatetime is 58% slower
+
+============ benchmark_utcnow_to_string
+datetime_utcnow_to_string 3.6737609150004573
+udatetime_utcnow_to_string 8.396922039000856
+udatetime is 56% slower
+
+============ benchmark_now_to_string
+datetime_now_to_string 5.066462685999795
+udatetime_now_to_string 11.217101648999233
+udatetime is 54% slower
+
+============ benchmark_fromtimestamp
+datetime_fromtimestamp 1.49455352699988
+udatetime_fromtimestamp 1.7328117040015059
+udatetime is 13% slower
+
+============ benchmark_utcfromtimestamp
+datetime_utcfromtimestamp 0.6809496840014617
+udatetime_utcfromtimestamp 0.8325351729999966
+udatetime is 18% slower
+```
+
+### PyPy 5.1.1
+
+```
+$ python bench.py
+Executing benchmarks ...
+
+============ benchmark_parse
+datetime_strptime 2.63264703751
+udatetime_parse 0.895127058029
+udatetime is 65% faster
+
+============ benchmark_format
+datetime_strftime 1.11581993103
+udatetime_format 1.13203406334
+udatetime is 1% slower
+
+============ benchmark_utcnow
+datetime_utcnow 0.195902109146
+udatetime_utcnow 0.355302095413
+udatetime is 44% slower
+
+============ benchmark_now
+datetime_now 1.14692687988
+udatetime_now 1.33081102371
+udatetime is 13% slower
+
+============ benchmark_utcnow_to_string
+datetime_utcnow_to_string 1.50462412834
+udatetime_utcnow_to_string 1.79078006744
+udatetime is 15% slower
+
+============ benchmark_now_to_string
+datetime_now_to_string 2.50896692276
+udatetime_now_to_string 2.9683971405
+udatetime is 15% slower
+
+============ benchmark_fromtimestamp
+datetime_fromtimestamp 0.941156864166
+udatetime_fromtimestamp 0.943603992462
+udatetime is 0% slower
+
+============ benchmark_utcfromtimestamp
+datetime_utcfromtimestamp 0.103535890579
+udatetime_utcfromtimestamp 0.107717037201
+udatetime is 3% slower
 ```
 
 ## Why RFC3339
