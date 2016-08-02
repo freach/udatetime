@@ -1,9 +1,8 @@
-from datetime import tzinfo, timedelta, datetime
-import time
+from datetime import tzinfo, timedelta, datetime as dt_datetime
+from time import time, gmtime
+from math import floor, ceil
 
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
-
-local_utc_offset = None
 
 
 class TZFixedOffset(tzinfo):
@@ -28,28 +27,60 @@ class TZFixedOffset(tzinfo):
         return self.tzname()
 
 
+def _timestamp_to_date_time(timestamp, tzinfo):
+    t_full = timestamp + (tzinfo.offset * 60)
+    timestamp = int(floor(t_full))
+    frac = (t_full - timestamp) * 1e6
+    us = int(floor(frac + 0.5) if frac >= 0.0 else ceil(frac - 0.5))
+
+    if us == 1000000:
+        timestamp += 1
+        us = 0
+
+    y, m, d, hh, mm, ss, weekday, jday, dst = gmtime(timestamp)
+    ss = min(ss, 59)  # if sec > 59, set 59 (platform leap support)
+    return dt_datetime(y, m, d, hh, mm, ss, us, tzinfo)
+
+
+def _format_date_time(date_time):
+    tm = date_time.timetuple()
+    offset = 0
+    sign = '+'
+
+    if date_time.tzinfo is not None:
+        if date_time.tzinfo.__class__ is not TZFixedOffset:
+            # TODO: Support all tzinfo subclasses by calling utcoffset()
+            raise ValueError('Only TZFixedOffset supported.')
+        offset = date_time.tzinfo.offset
+
+    if offset < 0:
+        sign = '-'
+
+    return '%04d-%02d-%02dT%02d:%02d:%02d.%06d%c%02d:%02d' % (
+        tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
+        date_time.microsecond, sign, offset / 60, offset % 60
+    )
+
+
 def _get_local_utc_offset():
-    global local_utc_offset
+    ts = time()
+    return (
+        dt_datetime.fromtimestamp(ts) - dt_datetime.utcfromtimestamp(ts)
+    ).total_seconds() / 60
 
-    if local_utc_offset is None:
-        ts = time.time()
-        utc_now = datetime.utcfromtimestamp(ts)
-        now = datetime.fromtimestamp(ts)
-        local_utc_offset = (now - utc_now).total_seconds() / 60
-
-    return local_utc_offset
+local_utc_offset = _get_local_utc_offset()
+local_timezone = TZFixedOffset(local_utc_offset)
+utc_timezone = TZFixedOffset(0)
 
 
 def utcnow():
     '''datetime aware object in UTC with current date and time.'''
-    now = datetime.utcnow()
-    return now.replace(tzinfo=TZFixedOffset(0))
+    return _timestamp_to_date_time(time(), utc_timezone)
 
 
 def now():
     '''datetime aware object in local timezone with current date and time.'''
-    now = datetime.now()
-    return now.replace(tzinfo=TZFixedOffset(_get_local_utc_offset()))
+    return _timestamp_to_date_time(time(), local_timezone)
 
 
 def from_rfc3339_string(rfc3339_string):
@@ -133,7 +164,7 @@ def from_rfc3339_string(rfc3339_string):
         if negative:
             offset = offset * -1
 
-    return datetime(
+    return dt_datetime(
         year, month, day, hour, minute, second, usec, TZFixedOffset(offset)
     )
 
@@ -141,41 +172,33 @@ def from_rfc3339_string(rfc3339_string):
 def to_rfc3339_string(date_time):
     '''Serialize date_time to RFC3339 compliant date-time string.'''
 
-    if date_time and date_time.__class__ is not datetime:
+    if date_time and date_time.__class__ is not dt_datetime:
         raise ValueError("Expected a datetime object.")
 
-    rfc3339 = date_time.strftime(DATE_TIME_FORMAT)
-
-    # TODO: Support all tzinfo subclasses by calling utcoffset()
-    if date_time.tzinfo is not None and\
-            date_time.tzinfo.__class__ is TZFixedOffset:
-
-        offset = date_time.tzinfo.offset
-        sign = '+'
-
-        if offset < 0:
-            sign = '-'
-
-        return rfc3339 + '%c%02d:%02d' % (sign, offset / 60, offset % 60)
-
-    return rfc3339 + '+00:00'
+    return _format_date_time(date_time)
 
 
 def from_timestamp(timestamp, tz=None):
     '''timestamp[, tz] -> tz's local time from POSIX timestamp.'''
-    return datetime.fromtimestamp(timestamp, tz)
+    if tz is None:
+        tz = local_timezone
+    elif tz.__class__ is not TZFixedOffset:
+        # TODO: Support all tzinfo subclasses by calling utcoffset()
+        raise ValueError('Only TZFixedOffset supported.')
+
+    return _timestamp_to_date_time(timestamp, tz)
 
 
 def from_utctimestamp(timestamp):
     '''timestamp -> UTC datetime from a POSIX timestamp (like time.time()).'''
-    return datetime.utcfromtimestamp(timestamp)
+    return _timestamp_to_date_time(timestamp, utc_timezone)
 
 
 def utcnow_to_string():
     '''Current UTC date and time RFC3339 compliant date-time string.'''
-    return to_rfc3339_string(utcnow())
+    return _format_date_time(utcnow())
 
 
 def now_to_string():
     '''Local date and time RFC3339 compliant date-time string.'''
-    return to_rfc3339_string(now())
+    return _format_date_time(now())
