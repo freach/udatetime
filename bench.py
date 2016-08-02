@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import datetime
 from time import time
 import udatetime
@@ -93,20 +94,42 @@ def benchmark_utcfromtimestamp():
 if __name__ == '__main__':
     import timeit
 
-    print 'Executing benchmarks ...'
+    benchmarks = [
+        benchmark_parse,
+        benchmark_format,
 
-    for k in globals().keys():
-        if k.startswith('benchmark_'):
-            print '============ %s' % k
-            mins = []
+        benchmark_utcnow,
+        benchmark_now,
 
-            for func in globals()[k]():
-                times =\
-                    timeit.repeat('func()', setup='from __main__ import func')
-                t = min(times)
-                mins.append(t)
+        benchmark_utcnow_to_string,
+        benchmark_now_to_string,
 
-                print func.__name__, t, times
+        benchmark_fromtimestamp,
+        benchmark_utcfromtimestamp,
+    ]
 
-            mins = sorted(mins)
-            print 'Difference: %d%%\n' % (100 - (mins[0] / (mins[1] / 100)))
+    print('Executing benchmarks ...')
+
+    for k in benchmarks:
+        print('\n============ %s' % k.__name__)
+        mins = []
+
+        for func in k():
+            times =\
+                timeit.repeat('func()', setup='from __main__ import func')
+            t = min(times)
+            mins.append(t)
+
+            print(func.__name__, t, times)
+
+        win = False
+        if mins[0] > mins[1]:
+            win = True
+
+        mins = sorted(mins)
+        diff = (100 - (mins[0] / (mins[1] / 100)))
+
+        if win:
+            print('udatetime is %d%% faster' % diff)
+        else:
+            print('udatetime is %d%% slower' % diff)

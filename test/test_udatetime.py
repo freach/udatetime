@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         HOUR = 3600
         TZ_CEST = udatetime.TZFixedOffset(60 * 2)
 
-        for t in xrange(0, DAY - (2 * HOUR), HOUR):
+        for t in range(0, DAY - (2 * HOUR), HOUR):
             dt = datetime.fromtimestamp(t)
             udt = udatetime.fromtimestamp(t)
 
@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
-        for t in xrange(0, DAY, HOUR):
+        for t in range(0, DAY, HOUR):
             dt = datetime.fromtimestamp(t, TZ_CEST)
             udt = udatetime.fromtimestamp(t, TZ_CEST)
 
@@ -81,7 +81,7 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
-        for t in xrange(0, DAY * -1, HOUR * -1):
+        for t in range(0, DAY * -1, HOUR * -1):
             dt = datetime.fromtimestamp(t, TZ_CEST)
             udt = udatetime.fromtimestamp(t, TZ_CEST)
 
@@ -99,7 +99,7 @@ class Test(unittest.TestCase):
         DAY = 86400
         HOUR = 3600
 
-        for t in xrange(0, DAY, HOUR):
+        for t in range(0, DAY, HOUR):
             dt = datetime.utcfromtimestamp(t)
             udt = udatetime.utcfromtimestamp(t)
 
@@ -112,7 +112,7 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
-        for t in xrange(0, DAY * -1, HOUR * -1):
+        for t in range(0, DAY * -1, HOUR * -1):
             dt = datetime.utcfromtimestamp(t)
             udt = udatetime.utcfromtimestamp(t)
 
