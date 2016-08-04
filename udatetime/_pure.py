@@ -54,6 +54,7 @@ def _format_date_time(date_time):
         offset = date_time.tzinfo.offset
 
     if offset < 0:
+        offset = offset * -1
         sign = '-'
 
     return '%04d-%02d-%02dT%02d:%02d:%02d.%06d%c%02d:%02d' % (

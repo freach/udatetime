@@ -13,7 +13,7 @@
 #include <time.h>
 
 
-#define RFC3339_VERSION "0.0.3"
+#define RFC3339_VERSION "0.0.4"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -411,8 +411,13 @@ static void _localnow(date_time_struct *now) {
  * Create RFC3339 date-time string
  */
 static void _format_date_time(date_time_struct *dt, char* datetime_string) {
+    int offset = (*dt).time.offset;
     char sign = '+';
-    if ((*dt).time.offset < 0) sign = '-';
+
+    if (offset < 0) {
+        offset = offset * -1;
+        sign = '-';
+    }
 
     sprintf(
         datetime_string,
@@ -425,8 +430,8 @@ static void _format_date_time(date_time_struct *dt, char* datetime_string) {
         (*dt).time.second,
         (*dt).time.fraction,
         sign,
-        (*dt).time.offset / HOUR_IN_MINS,
-        (*dt).time.offset % HOUR_IN_MINS
+        offset / HOUR_IN_MINS,
+        offset % HOUR_IN_MINS
     );
 }
 

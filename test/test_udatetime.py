@@ -45,6 +45,10 @@ class Test(unittest.TestCase):
         self.assertEqual(dt.microsecond, 123000)
         self.assertEqual(udatetime.to_string(dt), rfc3339)
 
+        rfc3339 = '2016-07-18T12:58:26.485897-02:00'
+        dt = udatetime.from_string(rfc3339)
+        self.assertEqual(udatetime.to_string(dt), rfc3339)
+
     def test_fromtimestamp(self):
         DAY = 86400
         HOUR = 3600
