@@ -64,4 +64,5 @@ setup(
     zip_safe=False,
     install_requires=requires,
     ext_modules=[rfc3339],
+    scripts=['scripts/bench_udatetime.py'],
 )
