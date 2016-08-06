@@ -1,6 +1,6 @@
 #define _GNU_SOURCE 1
 
-#ifdef _PYTHON2
+#if defined(_PYTHON2) || defined(_PYTHON3)
 #include <Python.h>
 #include <datetime.h>
 #include <structmember.h>
@@ -13,7 +13,7 @@
 #include <time.h>
 
 
-#define RFC3339_VERSION "0.0.4"
+#define RFC3339_VERSION "0.0.5"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -469,7 +469,7 @@ extern RFC3999_CAPI CAPI = {
  * ***======================= CPython Section =======================***
  */
 
-#ifdef _PYTHON2
+#if defined(_PYTHON2) || defined(_PYTHON3)
 /*
  * class FixedOffset(tzinfo):
  */
@@ -528,7 +528,11 @@ static PyObject *FixedOffset_tzname(FixedOffset *self, PyObject *args) {
         self->offset % HOUR_IN_MINS
     );
 
+#ifdef _PYTHON3
+    return PyUnicode_FromString(tzname);
+#else
     return PyString_FromString(tzname);
+#endif
 }
 
 /*
@@ -537,13 +541,6 @@ static PyObject *FixedOffset_tzname(FixedOffset *self, PyObject *args) {
  */
 static PyObject *FixedOffset_repr(FixedOffset *self) {
     return FixedOffset_tzname(self, NULL);
-}
-
-/*
- * Destructor
- */
-static void FixedOffset_dealloc(FixedOffset *self) {
-    self->ob_type->tp_free((PyObject*)self);
 }
 
 /*
@@ -564,13 +561,38 @@ static PyMethodDef FixedOffset_methods[] = {
     {NULL}
 };
 
+#ifdef _PYTHON3
+static PyTypeObject FixedOffset_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "rfc3339.FixedOffset_type",             /* tp_name */
+    sizeof(FixedOffset),                    /* tp_basicsize */
+    0,                                      /* tp_itemsize */
+    0,                                      /* tp_dealloc */
+    0,                                      /* tp_print */
+    0,                                      /* tp_getattr */
+    0,                                      /* tp_setattr */
+    0,                                      /* tp_as_async */
+    (reprfunc)FixedOffset_repr,             /* tp_repr */
+    0,                                      /* tp_as_number */
+    0,                                      /* tp_as_sequence */
+    0,                                      /* tp_as_mapping */
+    0,                                      /* tp_hash  */
+    0,                                      /* tp_call */
+    (reprfunc)FixedOffset_repr,             /* tp_str */
+    0,                                      /* tp_getattro */
+    0,                                      /* tp_setattro */
+    0,                                      /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
+    "TZInfo with fixed offset",             /* tp_doc */
+};
+#else
 static PyTypeObject FixedOffset_type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "rfc3339.FixedOffset_type", /*tp_name*/
     sizeof(FixedOffset),       /*tp_basicsize*/
     0,                         /*tp_itemsize*/
-    (destructor)FixedOffset_dealloc,/*tp_dealloc*/
+    0,                         /*tp_dealloc*/
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
@@ -589,6 +611,7 @@ static PyTypeObject FixedOffset_type = {
     Py_TPFLAGS_BASETYPE,       /*tp_flags*/
     "TZInfo with fixed offset",/* tp_doc */
 };
+#endif
 
 /*
  * Instantiate new FixedOffset_type object
@@ -734,7 +757,11 @@ static PyObject *to_rfc3339_string(PyObject *self, PyObject *args) {
     char datetime_string[33] = {0};
     _format_date_time(&dt, datetime_string);
 
+#ifdef _PYTHON3
+    return PyUnicode_FromString(datetime_string);
+#else
     return PyString_FromString(datetime_string);
+#endif
 }
 
 static PyObject *from_timestamp(PyObject *self, PyObject *args, PyObject *kw) {
@@ -798,7 +825,11 @@ static PyObject *utcnow_to_string(PyObject *self) {
     char datetime_string[33] = {0};
     _format_date_time(&dt, datetime_string);
 
+#ifdef _PYTHON3
+    return PyUnicode_FromString(datetime_string);
+#else
     return PyString_FromString(datetime_string);
+#endif
 }
 
 static PyObject *localnow_to_string(PyObject *self) {
@@ -808,7 +839,11 @@ static PyObject *localnow_to_string(PyObject *self) {
     char datetime_string[33] = {0};
     _format_date_time(&dt, datetime_string);
 
+#ifdef _PYTHON3
+    return PyUnicode_FromString(datetime_string);
+#else
     return PyString_FromString(datetime_string);
+#endif
 }
 
 // static PyObject *bench_c(PyObject *self) {
@@ -871,7 +906,28 @@ static PyMethodDef rfc3339_methods[] = {
     {NULL}
 };
 
-PyMODINIT_FUNC initrfc3339(void) {
+
+#ifdef _PYTHON3
+static struct PyModuleDef Python3_module = {
+    PyModuleDef_HEAD_INIT,
+    "rfc3339",
+    NULL,
+    -1,
+    rfc3339_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+#endif
+
+PyMODINIT_FUNC
+#ifdef _PYTHON3
+PyInit_rfc3339(void)
+#else
+initrfc3339(void)
+#endif
+{
     _get_local_utc_offset(); // call once to set local_utc_offset
 
     PyObject *m;
@@ -879,11 +935,24 @@ PyMODINIT_FUNC initrfc3339(void) {
 
     PyDateTime_IMPORT;
 
+#ifdef _PYTHON3
+    m = PyModule_Create(&Python3_module);
+#else
     m = Py_InitModule("rfc3339", rfc3339_methods);
-    if (m == NULL)
-        return;
+#endif
 
-    version_string = PyString_FromString (RFC3339_VERSION);
+    if (m == NULL)
+#ifdef _PYTHON3
+        return NULL;
+#else
+        return;
+#endif
+
+#ifdef _PYTHON3
+    version_string = PyUnicode_FromString(RFC3339_VERSION);
+#else
+    version_string = PyString_FromString(RFC3339_VERSION);
+#endif
     PyModule_AddObject(m, "__version__", version_string);
 
     FixedOffset_type.tp_new = PyType_GenericNew;
@@ -893,9 +962,17 @@ PyMODINIT_FUNC initrfc3339(void) {
     FixedOffset_type.tp_init = (initproc)FixedOffset_init;
 
     if (PyType_Ready(&FixedOffset_type) < 0)
+#ifdef _PYTHON3
+        return NULL;
+#else
         return;
+#endif
 
     Py_INCREF(&FixedOffset_type);
     PyModule_AddObject(m, "TZFixedOffset", (PyObject *)&FixedOffset_type);
+
+#ifdef _PYTHON3
+    return m;
+#endif
 }
 #endif

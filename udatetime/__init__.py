@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import sys
-
 try:
     import __pypy__
 except ImportError:
     __pypy__ = None
 
-if __pypy__ or sys.version_info.major == 3:
+if __pypy__:
     from udatetime._pure import (
         utcnow,
         now,
