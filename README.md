@@ -14,23 +14,11 @@ under the hood and code already using `datetime` should be able to easily
 switch to `udatetime`. All `datetime` objects created by `udatetime` are timezone
 aware.
 
-**Python 2**
-
-- Support: :heavy_check_mark:
-- Performance optimized: :heavy_check_mark:
-- Implementation: C
-
-**PyPy**
-
-- Support: :heavy_check_mark:
-- Performance optimized: :heavy_check_mark:
-- Implementation: Pure Python
-
-**Python 3**
-
-- Support: :heavy_check_mark:
-- Performance optimized: :heavy_check_mark:
-- Implementation: C
+|          | Support            | Performance optimized | Implementation |
+| -------- |:------------------:|:---------------------:| -------------- |
+| Python 2 | :heavy_check_mark: |  :heavy_check_mark:   | C              |
+| Python 3 | :heavy_check_mark: |  :heavy_check_mark:   | C              |
+| PyPy     | :heavy_check_mark: |  :heavy_check_mark:   | Pure Python    |
 
 ```python
 >>> udatetime.from_string("2016-07-15T12:33:20.123000+02:00")
