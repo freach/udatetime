@@ -120,16 +120,16 @@ if __name__ == '__main__':
             t = min(times)
             mins.append(t)
 
-            print(func.__name__, t, times)
+            print(func.__name__, t)
 
         win = False
         if mins[0] > mins[1]:
             win = True
 
         mins = sorted(mins)
-        diff = (100 - (mins[0] / (mins[1] / 100)))
+        diff = mins[1] / mins[0]
 
         if win:
-            print('udatetime is %d%% faster' % diff)
+            print('udatetime is %.01f times faster' % diff)
         else:
-            print('udatetime is %d%% slower' % diff)
+            print('udatetime is %.01f times slower' % diff)
