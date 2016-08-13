@@ -53,10 +53,16 @@ class Test(unittest.TestCase):
         DAY = 86400
         HOUR = 3600
         TZ_CEST = udatetime.TZFixedOffset(60 * 2)
+        UTC = udatetime.TZFixedOffset(0)
+
+        # NB: datetime.fromtimestamp() and udatetime.fromtimestamp() handle the
+        # implicit local timezone differently, so when used without an explicit
+        # timestamp they will not always agree
+        # see: 
 
         for t in range(0, DAY - (2 * HOUR), HOUR):
-            dt = datetime.fromtimestamp(t)
-            udt = udatetime.fromtimestamp(t)
+            dt = datetime.fromtimestamp(t, UTC)
+            udt = udatetime.fromtimestamp(t, UTC)
 
             self.assertIsInstance(udt, datetime)
             self.assertEqual(udt.year, dt.year)
