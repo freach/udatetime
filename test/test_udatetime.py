@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
         # NB: datetime.fromtimestamp() and udatetime.fromtimestamp() handle the
         # implicit local timezone differently, so when used without an explicit
         # timestamp they will not always agree
-        # see: 
+        # see: https://github.com/freach/udatetime/issues/10
 
         for t in range(0, DAY - (2 * HOUR), HOUR):
             dt = datetime.fromtimestamp(t, UTC)
