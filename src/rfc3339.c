@@ -517,15 +517,19 @@ static PyObject *FixedOffset_dst(FixedOffset *self, PyObject *args) {
 static PyObject *FixedOffset_tzname(FixedOffset *self, PyObject *args) {
     char tzname[7] = {0};
     char sign = '+';
+    int offset = self->offset;
 
-    if (self->offset < 0) sign = '-';
+    if (offset < 0) {
+        sign = '-';
+        offset *= -1;
+    }
 
     sprintf(
         tzname,
         "%c%02d:%02d",
         sign,
-        self->offset / HOUR_IN_MINS,
-        self->offset % HOUR_IN_MINS
+        offset / HOUR_IN_MINS,
+        offset % HOUR_IN_MINS
     );
 
 #ifdef _PYTHON3
