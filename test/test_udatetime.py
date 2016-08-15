@@ -63,10 +63,7 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.month, dt.month)
             self.assertEqual(udt.day, dt.day)
 
-            # missing hour for local CEST timezone with datetime,
-            # bug of datetime.datetime?
-            # self.assertEqual(udt.hour, dt.hour + 1)
-
+            self.assertEqual(udt.hour, dt.hour)
             self.assertEqual(udt.minute, dt.minute)
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)

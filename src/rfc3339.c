@@ -13,7 +13,7 @@
 #include <time.h>
 
 
-#define RFC3339_VERSION "0.0.5"
+#define RFC3339_VERSION "0.0.6"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -370,6 +370,53 @@ static void _timestamp_to_date_time(double timestamp, date_time_struct *now,
 
     struct tm *ts = NULL;
     ts = gmtime(&t);
+
+    (*now).date.year = (*ts).tm_year + 1900;
+    (*now).date.month = (*ts).tm_mon + 1;
+    (*now).date.day = (*ts).tm_mday;
+    (*now).date.wday = (*ts).tm_wday + 1;
+    (*now).date.ok = 1;
+
+    (*now).time.hour = (*ts).tm_hour;
+    (*now).time.minute = (*ts).tm_min;
+    (*now).time.second = (*ts).tm_sec;
+    (*now).time.fraction = (int)usec; // sec fractions in microseconds
+    (*now).time.offset = offset;
+    (*now).time.ok = 1;
+
+    (*now).ok = 1;
+}
+
+/*
+ * Convert positive and negative timestamp double to date_time_struct
+ * based on localtime
+ */
+static void _local_timestamp_to_date_time(double timestamp, date_time_struct *now) {
+    time_t t = (time_t)timestamp;
+    double fraction = (double)((timestamp - (int)timestamp) * 1000000);
+    int usec = fraction >= 0.0 ?\
+        (int)floor(fraction + 0.5) : (int)ceil(fraction - 0.5);
+
+    if (usec < 0) {
+        t -= 1;
+        usec += 1000000;
+    }
+
+    if (usec == 1000000) {
+        t += 1;
+        usec = 0;
+    }
+
+    struct tm *ts = NULL;
+    ts = localtime(&t);
+
+    int offset;
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+    // tm_gmtoff requires POSIX
+    offset = (int)(*ts).tm_gmtoff / HOUR_IN_MINS;
+#else
+    offset = 0;
+#endif
 
     (*now).date.year = (*ts).tm_year + 1900;
     (*now).date.month = (*ts).tm_mon + 1;
@@ -771,7 +818,6 @@ static PyObject *to_rfc3339_string(PyObject *self, PyObject *args) {
 static PyObject *from_timestamp(PyObject *self, PyObject *args, PyObject *kw) {
     double timestamp;
     PyObject *tz = Py_None;
-    int offset = _get_local_utc_offset();
     static char *keywords[] = {"timestamp", "tz", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kw, "d|O",
@@ -782,18 +828,24 @@ static PyObject *from_timestamp(PyObject *self, PyObject *args, PyObject *kw) {
     if(PyErr_Occurred())
         return NULL;
 
+    date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
+
     // TODO: Support all tzinfo subclasses by calling utcoffset()
     if (tz && tz != Py_None) {
         if (Py_TYPE(tz) != &FixedOffset_type) {
             PyErr_Format(PyExc_TypeError, "tz must be of type TZFixedOffset.");
             return NULL;
         } else {
-            offset = ((FixedOffset *)tz)->offset;
+            // Call gmtime based timestamp to datetime convertsion, offset provided
+            _timestamp_to_date_time(
+                timestamp, &dt, ((FixedOffset *)tz)->offset
+            );
         }
+    } else {
+        // Call localtime based timestamp to datetime convertsion, no offset
+        // provided, account for daylight saving
+        _local_timestamp_to_date_time(timestamp, &dt);
     }
-
-    date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
-    _timestamp_to_date_time(timestamp, &dt, offset);
 
     check_date_time_struct(&dt);
     if(PyErr_Occurred())

@@ -48,6 +48,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: POSIX',
+        'Operating System :: MacOS',
         'Programming Language :: C',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.6',
