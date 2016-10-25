@@ -16,7 +16,7 @@ package: clean
 	python setup.py bdist_egg
 
 release: clean
-	python setup.py bdist sdist upload
-	python setup.py bdist_egg upload
+	python setup.py bdist sdist upload -r pypi
+	python setup.py bdist_egg upload -r pypi
 
 .PHONY: clean package release
