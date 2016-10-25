@@ -33,7 +33,7 @@ def _timestamp_to_date_time(timestamp, tzinfo):
     frac = (t_full - timestamp) * 1e6
     us = int(floor(frac + 0.5) if frac >= 0.0 else ceil(frac - 0.5))
 
-    if us == 1000000:
+    if us == 1e6:
         timestamp += 1
         us = 0
 
