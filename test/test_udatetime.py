@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 import udatetime
 
 
@@ -184,6 +184,19 @@ class Test(unittest.TestCase):
         dt = datetime.fromtimestamp(t)
         udt = udatetime.fromtimestamp(t)
         self.assertEqual(udt.microsecond, dt.microsecond)
+
+    def test_raise_on_not_TZFixedOffset(self):
+        class TZInvalid(tzinfo):
+            def utcoffset(self, dt=None):
+                return timedelta(seconds=0)
+
+            def dst(self, dt=None):
+                return timedelta(seconds=0)
+
+        dt = datetime.now(TZInvalid())
+
+        with self.assertRaises(ValueError):
+            udatetime.to_string(dt)
 
 if __name__ == '__main__':
     unittest.main()

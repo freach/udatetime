@@ -779,6 +779,9 @@ static PyObject *to_rfc3339_string(PyObject *self, PyObject *args) {
         if (Py_TYPE(datetime_obj->tzinfo) == &FixedOffset_type) {
             FixedOffset *tzinfo = (FixedOffset *)datetime_obj->tzinfo;
             offset = tzinfo->offset;
+        } else {
+            PyErr_SetString(PyExc_ValueError, "Only TZFixedOffset supported.");
+            return NULL;
         }
     }
 
