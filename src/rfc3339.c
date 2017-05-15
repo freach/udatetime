@@ -13,7 +13,7 @@
 #include <time.h>
 
 
-#define RFC3339_VERSION "0.0.6"
+#define RFC3339_VERSION "0.0.12"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -672,9 +672,11 @@ static PyTypeObject FixedOffset_type = {
 static PyObject *new_fixed_offset_ex(int offset, PyTypeObject *type) {
     FixedOffset *self = (FixedOffset *) (type->tp_alloc(type, 0));
 
-    if (self != NULL)
-        self->offset = offset;
+    if (self == NULL) {
+        return NULL;
+    }
 
+    self->offset = offset;
     return (PyObject *) self;
 }
 
@@ -682,6 +684,7 @@ static PyObject *new_fixed_offset_ex(int offset, PyTypeObject *type) {
 
 static PyObject *dtstruct_to_datetime_obj(date_time_struct *dt) {
     if ((*dt).ok == 1) {
+        PyObject *offset = new_fixed_offset((*dt).time.offset);
         PyObject *new_datetime = PyDateTimeAPI->DateTime_FromDateAndTime(
             (*dt).date.year,
             (*dt).date.month,
@@ -690,10 +693,11 @@ static PyObject *dtstruct_to_datetime_obj(date_time_struct *dt) {
             (*dt).time.minute,
             (*dt).time.second,
             (*dt).time.fraction,
-            new_fixed_offset((*dt).time.offset),
+            offset,
             PyDateTimeAPI->DateTimeType
         );
 
+        Py_DECREF(offset);
         if (PyErr_Occurred())
             return NULL;
 
