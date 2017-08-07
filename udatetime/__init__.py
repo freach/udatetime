@@ -17,7 +17,7 @@ if __pypy__:
         TZFixedOffset
     )
 else:
-    from urfc3339 import (
+    from udatetime.rfc3339 import (
         utcnow,
         now,
         from_rfc3339_string as from_string,

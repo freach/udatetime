@@ -615,7 +615,7 @@ static PyMethodDef FixedOffset_methods[] = {
 #ifdef _PYTHON3
 static PyTypeObject FixedOffset_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "urfc3339.FixedOffset_type",             /* tp_name */
+    "rfc3339.FixedOffset_type",             /* tp_name */
     sizeof(FixedOffset),                    /* tp_basicsize */
     0,                                      /* tp_itemsize */
     0,                                      /* tp_dealloc */
@@ -640,7 +640,7 @@ static PyTypeObject FixedOffset_type = {
 static PyTypeObject FixedOffset_type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "urfc3339.FixedOffset_type", /*tp_name*/
+    "rfc3339.FixedOffset_type", /*tp_name*/
     sizeof(FixedOffset),       /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     0,                         /*tp_dealloc*/
@@ -749,13 +749,13 @@ static PyObject *localnow(PyObject *self) {
 }
 
 static PyObject *from_rfc3339_string(PyObject *self, PyObject *args) {
-    char *urfc3339_string;
+    char *rfc3339_string;
 
-    if (!PyArg_ParseTuple(args, "s", &urfc3339_string))
+    if (!PyArg_ParseTuple(args, "s", &rfc3339_string))
         return NULL;
 
     date_time_struct dt = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0};
-    _parse_date_time(urfc3339_string, &dt);
+    _parse_date_time(rfc3339_string, &dt);
 
     check_date_time_struct(&dt);
     if(PyErr_Occurred())
@@ -913,7 +913,7 @@ static PyObject *localnow_to_string(PyObject *self) {
 //     return Py_None;
 // }
 
-static PyMethodDef urfc3339_methods[] = {
+static PyMethodDef rfc3339_methods[] = {
     {
         "utcnow",
         (PyCFunction) utcnow,
@@ -973,10 +973,10 @@ static PyMethodDef urfc3339_methods[] = {
 #ifdef _PYTHON3
 static struct PyModuleDef Python3_module = {
     PyModuleDef_HEAD_INIT,
-    "urfc3339",
+    "udatetime.rfc3339",
     NULL,
     -1,
-    urfc3339_methods,
+    rfc3339_methods,
     NULL,
     NULL,
     NULL,
@@ -986,9 +986,9 @@ static struct PyModuleDef Python3_module = {
 
 PyMODINIT_FUNC
 #ifdef _PYTHON3
-PyInit_urfc3339(void)
+PyInit_rfc3339(void)
 #else
-initurfc3339(void)
+initrfc3339(void)
 #endif
 {
     _get_local_utc_offset(); // call once to set local_utc_offset
@@ -1001,7 +1001,7 @@ initurfc3339(void)
 #ifdef _PYTHON3
     m = PyModule_Create(&Python3_module);
 #else
-    m = Py_InitModule("urfc3339", urfc3339_methods);
+    m = Py_InitModule("udatetime.rfc3339", rfc3339_methods);
 #endif
 
     if (m == NULL)
