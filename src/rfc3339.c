@@ -256,7 +256,7 @@ static void _parse_time(char *time_string, time_struct *t) {
     // check for fractions
     if (*tokens == '.') {
         tokens++;
-        char fractions[6] = {0};
+        char fractions[7] = {0};
 
         // Substring fractions, max 6 digits for usec
         for (unsigned int i = 0; i < 6; i++) {
