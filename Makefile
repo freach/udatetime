@@ -15,8 +15,8 @@ package: clean
 	python setup.py bdist sdist
 	python setup.py bdist_egg
 
-release: clean
-	python setup.py bdist sdist upload -r pypi
-	python setup.py bdist_egg upload -r pypi
+release: package
+        pip install twine
+        twine upload dist/*
 
 .PHONY: clean package release
