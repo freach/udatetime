@@ -29,9 +29,9 @@ elif sys.version_info.major == 2:
 elif sys.version_info.major == 3:
     macros.append(('_PYTHON3', '1'))
 
-rfc3339 = Extension(
-    'rfc3339',
-    ['./src/rfc3339.c'],
+urfc3339 = Extension(
+    'urfc3339',
+    ['./src/urfc3339.c'],
     define_macros=macros,
     extra_compile_args=['-Ofast', '-std=c99']
 )
@@ -64,6 +64,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=requires,
-    ext_modules=[rfc3339],
+    ext_modules=[urfc3339],
     scripts=['scripts/bench_udatetime.py'],
 )
