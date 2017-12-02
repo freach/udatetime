@@ -2,6 +2,8 @@ import unittest
 from datetime import datetime, timedelta, tzinfo
 import udatetime
 
+NO_DST = timedelta(0)
+
 
 class Test(unittest.TestCase):
 
@@ -17,6 +19,9 @@ class Test(unittest.TestCase):
         self.assertEqual(now.minute, dt_now.minute)
         self.assertEqual(now.second, dt_now.second)
         # self.assertEqual(now.microsecond, dt_now.microsecond)
+
+        self.assertEqual(now.utcoffset(), timedelta(0))
+        self.assertEqual(now.dst(), NO_DST)
 
     def test_now(self):
         dt_now = datetime.now()
@@ -43,6 +48,8 @@ class Test(unittest.TestCase):
         self.assertEqual(dt.minute, 33)
         self.assertEqual(dt.second, 20)
         self.assertEqual(dt.microsecond, 123000)
+        self.assertEqual(dt.utcoffset(), timedelta(hours=1, minutes=30))
+        self.assertEqual(dt.dst(), NO_DST)
         self.assertEqual(udatetime.to_string(dt), rfc3339)
 
         rfc3339 = '2016-07-18T12:58:26.485897-02:00'
@@ -68,6 +75,9 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
+            self.assertEqual(udt.utcoffset(), timedelta(0))
+            self.assertEqual(udt.dst(), NO_DST)
+
         for t in range(0, DAY, HOUR):
             dt = datetime.fromtimestamp(t, TZ_CEST)
             udt = udatetime.fromtimestamp(t, TZ_CEST)
@@ -82,6 +92,9 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
+            self.assertEqual(udt.utcoffset(), timedelta(hours=2))
+            self.assertEqual(udt.dst(), NO_DST)
+
         for t in range(0, DAY * -1, HOUR * -1):
             dt = datetime.fromtimestamp(t, TZ_CEST)
             udt = udatetime.fromtimestamp(t, TZ_CEST)
@@ -95,6 +108,9 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.minute, dt.minute)
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
+
+            self.assertEqual(udt.utcoffset(), timedelta(hours=2))
+            self.assertEqual(udt.dst(), NO_DST)
 
     def test_utcfromtimestamp(self):
         DAY = 86400
@@ -113,6 +129,9 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
+            self.assertEqual(udt.utcoffset(), timedelta(0))
+            self.assertEqual(udt.dst(), NO_DST)
+
         for t in range(0, DAY * -1, HOUR * -1):
             dt = datetime.utcfromtimestamp(t)
             udt = udatetime.utcfromtimestamp(t)
@@ -125,6 +144,9 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.minute, dt.minute)
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
+
+            self.assertEqual(udt.utcoffset(), timedelta(0))
+            self.assertEqual(udt.dst(), NO_DST)
 
     def test_broken_from_string(self):
         invalid = [
@@ -161,23 +183,29 @@ class Test(unittest.TestCase):
         rfc3339 = '2016-07-15T12:33:20.123000+01:30'
         dt = udatetime.from_string(rfc3339)
         offset = dt.tzinfo.utcoffset()
+        dst = dt.tzinfo.dst()
 
         self.assertIsInstance(offset, timedelta)
         self.assertEqual(offset.total_seconds() / 60, 90)
+        self.assertEqual(dst, NO_DST)
 
         rfc3339 = '2016-07-15T12:33:20.123000Z'
         dt = udatetime.from_string(rfc3339)
         offset = dt.tzinfo.utcoffset()
+        dst = dt.tzinfo.dst()
 
         self.assertIsInstance(offset, timedelta)
         self.assertEqual(offset.total_seconds(), 0)
+        self.assertEqual(dst, NO_DST)
 
         rfc3339 = '2016-07-15T12:33:20.123000-02:00'
         dt = udatetime.from_string(rfc3339)
         offset = dt.tzinfo.utcoffset()
+        dst = dt.tzinfo.dst()
 
         self.assertIsInstance(offset, timedelta)
         self.assertEqual(offset.total_seconds() / 60, -120)
+        self.assertEqual(dst, NO_DST)
 
     def test_precision(self):
         t = 1469897308.549871
