@@ -11,8 +11,10 @@ date-time format.
 serialization and deserialization of RFC3339 date-time strings. `udatetime` is
 using Python's [datetime class](https://docs.python.org/2/library/datetime.html)
 under the hood and code already using `datetime` should be able to easily
-switch to `udatetime`. All `datetime` objects created by `udatetime` are timezone
-aware.
+switch to `udatetime`. All `datetime` objects created by `udatetime` are
+timezone-aware. The timezones that `udatetime` uses are fixed-offset timezones,
+meaning that they don't observe daylight savings time (DST), and thus return a
+fixed offset from UTC all year round.
 
 |          | Support            | Performance optimized | Implementation |
 | -------- |:------------------:|:---------------------:| -------------- |
