@@ -548,10 +548,10 @@ static PyObject *FixedOffset_utcoffset(FixedOffset *self, PyObject *args) {
 
 /*
  * def dst(self, dt):
- *     return timedelta(seconds=self.offset * 60)
+ *     return timedelta(0)
  */
 static PyObject *FixedOffset_dst(FixedOffset *self, PyObject *args) {
-    return PyDelta_FromDSU(0, self->offset * 60, 0);
+    return PyDelta_FromDSU(0, 0, 0);
 }
 
 /*
