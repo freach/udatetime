@@ -14,7 +14,7 @@ class TZFixedOffset(tzinfo):
         return timedelta(seconds=self.offset * 60)
 
     def dst(self, dt=None):
-        return timedelta(seconds=self.offset * 60)
+        return timedelta(0)
 
     def tzname(self, dt=None):
         sign = '+'
