@@ -13,7 +13,7 @@
 #include <time.h>
 
 
-#define RFC3339_VERSION "0.0.13"
+#define RFC3339_VERSION "0.0.15"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -135,6 +135,7 @@ static void _parse_date(char *date_string, date_struct *d) {
     int status = sscanf(
         tokens, "%04d-%02d-%02d", &((*d).year), &((*d).month), &((*d).day)
     );
+    free((char*)tokens);
 
     // Validate parsed tokens
     if (status != 3) return;
