@@ -274,7 +274,7 @@ date-time       = full-date "T" full-time
 
 `udatetime` specific format addons:
 
-- time-secfrac can be either 3DIGIT for milliseconds or 6DIGIT for microseconds
+- time-secfrac from 1DIGIT up to 6DIGIT
 - time-secfrac will be normalized to microseconds
 - time-offset is optional. Missing time-offset will be treated as UTC.
 - spaces will be eliminated

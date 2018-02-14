@@ -153,9 +153,10 @@ class Test(unittest.TestCase):
             '2016-07-15 12:33:20.123000+01:30',
             '2016-13-15T12:33:20.123000+01:30',
             '20161315T12:33:20.123000+01:30',
-            '2016-07-15T12:33:20.1 +01:30',
             'Hello World',
-            '2016-07-15 12:33:20.123000+01:302016-07-15 12:33:20.123000+01:30'
+            '2016-07-15 12:33:20.123000+01:302016-07-15 12:33:20.123000+01:30',
+            '2016-07-15T12:33:20.1Z0',
+            '2016-07-15T12:33:20.1 +01:30f',
         ]
 
         for r in invalid:
@@ -170,7 +171,8 @@ class Test(unittest.TestCase):
             '2016-07-15T12:33:20 +01:30',
             '2016-07-15T12:33:20 Z',
             '2016-07-15T12:33:20',
-            '2016-07-15t12:33:20'
+            '2016-07-15t12:33:20',
+            '2016-07-15T12:33:20.1 +01:30',
         ]
 
         for r in rfc3339s:
@@ -225,6 +227,26 @@ class Test(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             udatetime.to_string(dt)
+
+    def test_variable_fraction(self):
+        rfc3339 = '2016-07-15T12:33:20.1'
+        d1 = udatetime.from_string(rfc3339 + ('0' * 5) + 'Z')
+
+        for x in range(0, 6):
+            d2 = udatetime.from_string(rfc3339 + ('0' * x) + 'Z')
+            self.assertEqual(d1, d2)
+
+        self.assertEqual(
+            udatetime.from_string('2016-07-15T12:33:20.123Z'),
+            udatetime.from_string('2016-07-15T12:33:20.123000Z'),
+        )
+
+        self.assertEqual(
+            udatetime.from_string('2016-07-15T12:33:20.0Z'),
+            udatetime.from_string('2016-07-15T12:33:20Z'),
+        )
+
+
 
 if __name__ == '__main__':
     unittest.main()
