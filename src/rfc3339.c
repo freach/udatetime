@@ -13,7 +13,7 @@
 #include <time.h>
 
 
-#define RFC3339_VERSION "0.0.15"
+#define RFC3339_VERSION "0.0.16"
 #define DAY_IN_SECS 86400
 #define HOUR_IN_SECS 3600
 #define MINUTE_IN_SECS 60
@@ -271,8 +271,8 @@ static void _parse_time(char *time_string, time_struct *t) {
         // convert fractions to uint
         status = sscanf(fractions, "%d", &((*t).fraction));
 
-        if (strlen(fractions) == 3) {
-            (*t).fraction = (*t).fraction * 1000; // convert msec to usec
+        if (strlen(fractions) < 6 && strlen(fractions) > 0) {
+            (*t).fraction = (*t).fraction * pow(10, 6 - strlen(fractions)); // convert msec to usec
         } else if (strlen(fractions) == 6) {
             // all fine, already in usec
         } else {
@@ -296,7 +296,14 @@ static void _parse_time(char *time_string, time_struct *t) {
     // parse timezone
     if ((*tokens == 'Z') || (*tokens == 'z')) {
         (*t).offset = 0;
-        (*t).ok = 1;
+
+        tokens++;
+        if (strlen(tokens) == 0) {
+            (*t).ok = 1;
+        } else {
+            (*t).ok = 0;
+        }
+
         goto cleanup;
     } else if ((*tokens == '+') || (*tokens == '-')) {
         unsigned int tz_hour, tz_minute;
@@ -317,7 +324,13 @@ static void _parse_time(char *time_string, time_struct *t) {
         }
 
         (*t).offset = tz_offset;
-        (*t).ok = 1;
+
+        tokens = tokens + 6;
+        if (strlen(tokens) == 0) {
+            (*t).ok = 1;
+        } else {
+            (*t).ok = 0;
+        }
     }
 
 cleanup:

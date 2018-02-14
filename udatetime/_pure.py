@@ -123,22 +123,29 @@ def from_rfc3339_string(rfc3339_string):
             usec_buf = ''
 
             for c in _time[9:]:
-                if c in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+                if c in '0123456789':
                     usec_buf += c
                 else:
                     break
 
-            if len(usec_buf) not in (3, 6):
+            if len(usec_buf) > 6:
                 raise ValueError('Invalid RFC3339 string. Invalid fractions.')
 
             usec = int(usec_buf)
 
-            if len(usec_buf) == 3:
-                usec = usec * 1000
+            if len(usec_buf) > 0 and len(usec_buf) < 6:
+                # ugly as shit, but good damn multiplication precision makes
+                # it a mess
+                usec = usec * int('1' + '0' * (6 - len(usec_buf)))
 
             _time = _time[9 + len(usec_buf):]
         elif _time[8] == 'z':
             offset = 0
+
+            if len(_time[9:]):
+                raise ValueError(
+                    'Invalid RFC3339 string. Remaining data after time zone.'
+                )
         else:
             _time = _time[8:]
     else:
@@ -146,8 +153,13 @@ def from_rfc3339_string(rfc3339_string):
 
     if offset is None and (len(_time) == 0 or _time[0] == 'z'):
         offset = 0
+
+        if len(_time[1:]):
+            raise ValueError(
+                'Invalid RFC3339 string. Remaining data after time zone.'
+            )
     elif offset is None:
-        if _time[0] not in ('+', '-'):
+        if _time[0] not in '+-':
             raise ValueError('Invalid RFC3339 string. Expected timezone.')
 
         negative = True if _time[0] == '-' else False
