@@ -75,7 +75,9 @@ class Test(unittest.TestCase):
             self.assertEqual(udt.second, dt.second)
             self.assertEqual(udt.microsecond, dt.microsecond)
 
-            self.assertEqual(udt.utcoffset(), timedelta(0))
+            offset = datetime.fromtimestamp(t) - datetime.utcfromtimestamp(t)
+
+            self.assertEqual(udt.utcoffset(), offset)
             self.assertEqual(udt.dst(), NO_DST)
 
         for t in range(0, DAY, HOUR):
