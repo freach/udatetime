@@ -36,6 +36,7 @@ if __pypy__ is None:
         Extension(
             'udatetime.rfc3339',
             ['./src/rfc3339.c'],
+            libraries=['m'],
             define_macros=macros,
             extra_compile_args=['-Ofast', '-std=c99']
         )
