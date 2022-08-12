@@ -12,6 +12,9 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef HAVE_FTIME
+#include <sys/timeb.h>
+#endif
 
 #define RFC3339_VERSION "0.0.16"
 #define DAY_IN_SECS 86400
