@@ -427,14 +427,6 @@ static void _local_timestamp_to_date_time(double timestamp, date_time_struct *no
     struct tm *ts = NULL;
     ts = localtime(&t);
 
-    int offset;
-#ifdef HAVE_STRUCT_TM_TM_ZONE
-    // tm_gmtoff requires POSIX
-    offset = (int)(*ts).tm_gmtoff / HOUR_IN_MINS;
-#else
-    offset = 0;
-#endif
-
     (*now).date.year = (*ts).tm_year + 1900;
     (*now).date.month = (*ts).tm_mon + 1;
     (*now).date.day = (*ts).tm_mday;
@@ -445,7 +437,7 @@ static void _local_timestamp_to_date_time(double timestamp, date_time_struct *no
     (*now).time.minute = (*ts).tm_min;
     (*now).time.second = (*ts).tm_sec;
     (*now).time.fraction = (int)usec; // sec fractions in microseconds
-    (*now).time.offset = offset;
+    (*now).time.offset = 0;
     (*now).time.ok = 1;
 
     (*now).ok = 1;
