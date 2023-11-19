@@ -32,15 +32,26 @@ elif sys.version_info.major == 3:
 ext_modules = []
 
 if __pypy__ is None:
-    ext_modules.append(
-        Extension(
-            'udatetime.rfc3339',
-            ['./src/rfc3339.c'],
-            libraries=['m'],
-            define_macros=macros,
-            extra_compile_args=['-Ofast', '-std=c99']
+    if os.name == 'nt':
+        ext_modules.append(
+            Extension(
+                'udatetime.rfc3339',
+                ['./src/rfc3339.c'],
+                libraries=[],
+                define_macros=macros,
+                extra_compile_args=['/O2']
+            )
         )
-    )
+    else:
+        ext_modules.append(
+            Extension(
+                'udatetime.rfc3339',
+                ['./src/rfc3339.c'],
+                libraries=['m'],
+                define_macros=macros,
+                extra_compile_args=['-Ofast', '-std=c99']
+            )
+        )
 
 setup(
     name=name,
